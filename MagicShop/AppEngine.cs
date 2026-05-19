@@ -14,7 +14,6 @@ namespace MagicShop
 
         public void Run()
         {
-            CreateExampleFiles();
             LoadAllData();
 
             bool exit = false;
@@ -211,36 +210,6 @@ namespace MagicShop
             {
                 Console.Write($"ошибка при экспорте: {ex.Message}\n");
             }
-        }
-
-        private void CreateExampleFiles()
-        {
-            if (!File.Exists("antique.xml"))
-            {
-                var antiques = new List<AntiqueArtifact>
-        {
-            new AntiqueArtifact { Id = 1, Name = "Amulet of Yendor", PowerLevel = 95, Rarity = Rarity.Legendary, Age = 1200, OriginRealm = "Arcadia" }
-        };
-                new XmlProcessor().SaveData(antiques, "antique.xml");
-            }
-
-            if (!File.Exists("modern.json"))
-            {
-                var moderns = new List<ModernArtifact>
-        {
-            new ModernArtifact { Id = 2, Name = "Hyper Phase Blaster", PowerLevel = 88, Rarity = Rarity.Epic, TechLevel = 9.5, Manufacturer = "TechMage Inc." }
-        };
-                new JsonProcessor().SaveData(moderns, "modern.json");
-            }
-
-            if (!File.Exists("legends.txt"))
-            {
-                var legends = new List<LegendaryArtifact>
-        {
-            new LegendaryArtifact { Id = 3, Name = "Sword of Destiny", PowerLevel = 100, Rarity = Rarity.Legendary, CurseDescription = "Drains life from the wielder", IsCursed = true }
-        };
-                new TextProcessor().SaveData(legends, "legends.txt");
-            }
-        }
+        }        
     }
 }
