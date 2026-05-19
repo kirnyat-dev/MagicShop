@@ -8,35 +8,54 @@ namespace MagicShop
 {
     public class TextProcessor : IDataProcessor<LegendaryArtifact>
     {
-        public List<LegendaryArtifact> LoadData(string source)
+        private static int _idCounter = 1000;
+
+        public List<LegendaryArtifact> LoadData(string filePath)
         {
-            List<LegendaryArtifact> List = new List<LegendaryArtifact>();
-            if (!File.Exists(source)) return List;
+            var list = new List<LegendaryArtifact>();
+            if (!File.Exists(filePath)) return list;
 
-            string[] Lines = File.ReadAllLines(source);
-            foreach (string Line in Lines)
+            try
             {
-                if (string.IsNullOrWhiteSpace(Line)) continue;
+                var lines = File.ReadAllLines(filePath);
+                foreach (var line in lines)
+                {
+                    if (string.IsNullOrWhiteSpace(line)) continue;
 
-                string[] Parts = Line.Split('|').Select(p => p.Trim()).ToArray();
-                if (Parts.Length < 6) continue;
+                    var parts = line.Split('|');
+                    if (parts.Length < 5)
+                        throw new FormatException($"некорректный формат строки: '{line}'");
 
-                LegendaryArtifact Item = new LegendaryArtifact();
-                Item.Id = int.Parse(Parts[0]);
-                Item.Name = Parts[1];
-                Item.PowerLevel = int.Parse(Parts[2]);
-                Item.Rarity = Enum.Parse<Rarity>(Parts[3]);
-                Item.CurseDescription = Parts[4];
-                Item.IsCursed = bool.Parse(Parts[5]);
-                List.Add(Item);
+                    var artifact = new LegendaryArtifact
+                    {
+                        Id = ++_idCounter,
+                        Name = parts[0].Trim(),
+                        PowerLevel = int.Parse(parts[1].Trim()),
+                        Rarity = (Rarity)Enum.Parse(typeof(Rarity), parts[2].Trim(), true),
+                        CurseDescription = parts[3].Trim(),
+                        IsCursed = bool.Parse(parts[4].Trim())
+                    };
+                    list.Add(artifact);
+                }
+                return list;
             }
-            return List;
+            catch (Exception ex)
+            {
+                throw new IOException($"ошибка чтения текстового файла {filePath}: {ex.Message}", ex);
+            }
         }
 
-        public void SaveData(string destination, List<LegendaryArtifact> data)
+        public void SaveData(List<LegendaryArtifact> data, string filePath)
         {
-            List<string> Lines = data.Select(Item => $"{Item.Id} | {Item.Name} | {Item.PowerLevel} | {Item.Rarity} | {Item.CurseDescription} | {Item.IsCursed}").ToList();
-            File.WriteAllLines(destination, Lines);
+            try
+            {
+                var lines = data.Select(x => x.Serialize());
+                File.WriteAllLines(filePath, lines);
+            }
+            catch (Exception ex)
+            {
+                throw new IOException($"ошибка записи текстового файла {filePath}: {ex.Message}", ex);
+            }
         }
     }
 }

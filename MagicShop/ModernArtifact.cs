@@ -9,20 +9,11 @@ namespace MagicShop
     public class ModernArtifact : Artifact
     {
         public double TechLevel { get; set; }
-        public string Manufacturer { get; set; }
+        public string Manufacturer { get; set; } = string.Empty;
 
-        public override string Serialize() => $"json-формат: {ExportToJson()}";
-
-        public override string ExportToJson()
+        public override string Serialize()
         {
-            return $"{{\"Id\":{Id},\"Name\":\"{Name}\",\"PowerLevel\":{PowerLevel},\"Rarity\":\"{Rarity}\",\"TechLevel\":{TechLevel.ToString(System.Globalization.CultureInfo.InvariantCulture)},\"Manufacturer\":\"{Manufacturer}\"}}";
+            return $"{{\n  \"Id\": {Id},\n  \"Name\": \"{Name}\",\n  \"PowerLevel\": {PowerLevel},\n  \"Rarity\": \"{Rarity}\",\n  \"TechLevel\": {TechLevel},\n  \"Manufacturer\": \"{Manufacturer}\"\n}}";
         }
-
-        public override string ExportToXml()
-        {
-            return $"<ModernArtifact><Id>{Id}</Id><Name>{Name}</Name><PowerLevel>{PowerLevel}</PowerLevel><Rarity>{Rarity}</Rarity><TechLevel>{TechLevel.ToString(System.Globalization.CultureInfo.InvariantCulture)}</TechLevel><Manufacturer>{Manufacturer}</Manufacturer></ModernArtifact>";
-        }
-
-        public override string ToString() => $"{base.ToString()} | тех.уровень: {TechLevel} | производитель: {Manufacturer}";
     }
 }

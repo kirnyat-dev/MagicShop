@@ -8,21 +8,12 @@ namespace MagicShop
 {
     public class LegendaryArtifact : Artifact
     {
-        public string CurseDescription { get; set; }
+        public string CurseDescription { get; set; } = string.Empty;
         public bool IsCursed { get; set; }
 
-        public override string Serialize() => $"txt-строка: {Name} | {PowerLevel} | {Rarity} | {CurseDescription} | {IsCursed}";
-
-        public override string ExportToJson()
+        public override string Serialize()
         {
-            return $"{{\"Id\":{Id},\"Name\":\"{Name}\",\"PowerLevel\":{PowerLevel}\",\"Rarity\":\"{Rarity}\",\"CurseDescription\":\"{CurseDescription}\",\"IsCursed\":{IsCursed.ToString().ToLower()}}}";
+            return $"{Name}|{PowerLevel}|{Rarity}|{CurseDescription}|{IsCursed}";
         }
-
-        public override string ExportToXml()
-        {
-            return $"<LegendaryArtifact><Id>{Id}</Id><Name>{Name}</Name><PowerLevel>{PowerLevel}</PowerLevel><Rarity>{Rarity}</Rarity><CurseDescription>{CurseDescription}</CurseDescription><IsCursed>{IsCursed.ToString().ToLower()}</IsCursed></LegendaryArtifact>";
-        }
-
-        public override string ToString() => $"{base.ToString()} | проклятие: {CurseDescription} | проклят: {IsCursed}";
     }
 }

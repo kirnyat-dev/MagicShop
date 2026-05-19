@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,54 +10,73 @@ namespace MagicShop
 {
     public class JsonProcessor : IDataProcessor<ModernArtifact>
     {
-        public List<ModernArtifact> LoadData(string source)
+        public List<ModernArtifact> LoadData(string filePath)
         {
-            List<ModernArtifact> List = new List<ModernArtifact>();
-            if (!File.Exists(source)) return List;
+            var list = new List<ModernArtifact>();
+            if (!File.Exists(filePath)) return list;
 
-            string[] Lines = File.ReadAllLines(source);
-            foreach (string Line in Lines)
+            try
             {
-                string Trimmed = Line.Trim(' ', '[', ']', ',');
-                if (string.IsNullOrEmpty(Trimmed)) continue;
+                string content = File.ReadAllText(filePath);
+                var blocks = content.Split(new[] { '{', '}' }, StringSplitOptions.RemoveEmptyEntries)
+                                    .Where(b => b.Contains("\"Name\"") || b.Contains("Name"));
 
-                ModernArtifact Item = new ModernArtifact();
-                Item.Id = int.Parse(ExtractJsonValue(Trimmed, "Id"));
-                Item.Name = ExtractJsonValue(Trimmed, "Name");
-                Item.PowerLevel = int.Parse(ExtractJsonValue(Trimmed, "PowerLevel"));
-                Item.Rarity = Enum.Parse<Rarity>(ExtractJsonValue(Trimmed, "Rarity"));
-                Item.TechLevel = double.Parse(ExtractJsonValue(Trimmed, "TechLevel"), System.Globalization.CultureInfo.InvariantCulture);
-                Item.Manufacturer = ExtractJsonValue(Trimmed, "Manufacturer");
-                List.Add(Item);
+                foreach (var block in blocks)
+                {
+                    var artifact = new ModernArtifact();
+                    var lines = block.Split(new[] { ',', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+
+                    foreach (var line in lines)
+                    {
+                        if (!line.Contains(":")) continue;
+                        var parts = line.Split(':');
+                        string key = parts[0].Trim().Replace("\"", "").Replace("'", "");
+                        string val = parts[1].Trim().Replace("\"", "").Replace("'", "");
+
+                        switch (key)
+                        {
+                            case "Id": artifact.Id = int.Parse(val); break;
+                            case "Name": artifact.Name = val; break;
+                            case "PowerLevel": artifact.PowerLevel = int.Parse(val); break;
+                            case "Rarity": artifact.Rarity = (Rarity)Enum.Parse(typeof(Rarity), val, true); break;
+                            case "TechLevel": artifact.TechLevel = double.Parse(val, CultureInfo.InvariantCulture); break;
+                            case "Manufacturer": artifact.Manufacturer = val; break;
+                        }
+                    }
+                    list.Add(artifact);
+                }
+                return list;
             }
-            return List;
+            catch (Exception ex)
+            {
+                Console.Write($"ошибка парсинга JSON: {ex.Message}\n");
+                return list;
+            }
         }
 
-        public void SaveData(string destination, List<ModernArtifact> data)
+        public void SaveData(List<ModernArtifact> data, string filePath)
         {
-            List<string> Lines = new List<string> { "[" };
-            for (int i = 0; i < data.Count; i++)
+            try
             {
-                string Suffix = i < data.Count - 1 ? "," : "";
-                Lines.Add("  " + data[i].ExportToJson() + Suffix);
+                var lines = new List<string> { "[" };
+                for (int i = 0; i < data.Count; i++)
+                {
+                    lines.Add("  {");
+                    lines.Add($"    \"Id\": {data[i].Id},");
+                    lines.Add($"    \"Name\": \"{data[i].Name}\",");
+                    lines.Add($"    \"PowerLevel\": {data[i].PowerLevel},");
+                    lines.Add($"    \"Rarity\": \"{data[i].Rarity}\",");
+                    lines.Add($"    \"TechLevel\": {data[i].TechLevel.ToString(CultureInfo.InvariantCulture)},");
+                    lines.Add($"    \"Manufacturer\": \"{data[i].Manufacturer}\"");
+                    lines.Add(i == data.Count - 1 ? "  }" : "  },");
+                }
+                lines.Add("]");
+                File.WriteAllLines(filePath, lines);
             }
-            Lines.Add("]");
-            File.WriteAllLines(destination, Lines);
-        }
-
-        private string ExtractJsonValue(string raw, string key)
-        {
-            string Pattern = $"\"{key}\":";
-            int Index = raw.IndexOf(Pattern);
-            if (Index == -1) return string.Empty;
-
-            int Start = Index + Pattern.Length;
-            while (Start < raw.Length && (raw[Start] == ' ' || raw[Start] == '"')) Start++;
-
-            int End = Start;
-            while (End < raw.Length && raw[End] != ',' && raw[End] != '}' && raw[End] != '"') End++;
-
-            return raw.Substring(Start, End - Start);
+            catch (Exception ex)
+            {
+                throw new IOException($"ошибка записи JSON-файла {filePath}: {ex.Message}", ex);
+            }
         }
     }
 }

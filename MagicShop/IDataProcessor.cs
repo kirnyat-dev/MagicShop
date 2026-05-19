@@ -9,6 +9,6 @@ namespace MagicShop
     public interface IDataProcessor<T>
     {
         List<T> LoadData(string source);
-        void SaveData(string destination, List<T> data);
+        void SaveData(List<T> data, string filePath);
     }
 }
